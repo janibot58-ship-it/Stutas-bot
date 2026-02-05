@@ -3356,77 +3356,176 @@ case 'bots': {
   }
   break;
 }
+*MINI BOT SONG CASE PLUGIN GIVE AWAY*
+
+// ================================
+// *DON'T REMOVE CREDIT*
+// *🧑‍🔧 `Credit by:` Hansa Dewmina*
+//================================
+
 case 'song': {
-    const yts = require("yt-search");
-    const axios = require("axios");
+  // Dew Coders 2025 
+  const yts = require('yt-search');
+  const axios = require('axios');
+  // මෙතනට අපේ සයිට් එකෙන් ඔයාලට free හම්බෙන Api Key එක දාන්න - https://bots.srihub.store
+  const apikey = "dew_ml56sj3d2fe5e8a867b80066a15e0aed90bad3ee272191c8580fdb76a9cc6085af5dd826"; // Paste Your Api Key Form https://bots.srihub.store
+  const apibase = "https://api.srihub.store"
 
-    // Axios defaults
-    const AXIOS_DEFAULTS = {
-        timeout: 60000,
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            Accept: "application/json, text/plain, */*",
-        },
-    };
+  // Extract message text safely
+  const q =
+  msg.message?.conversation ||
+  msg.message?.extendedTextMessage?.text ||
+  msg.message?.imageMessage?.caption ||
+  msg.message?.videoMessage?.caption ||
+  "";
 
-    // retry helper
-    async function tryRequest(getter, attempts = 3) {
-        let lastErr;
-        for (let i = 1; i <= attempts; i++) {
-            try {
-                return await getter();
-            } catch (e) {
-                lastErr = e;
-                if (i < attempts) await new Promise(r => setTimeout(r, 1000 * i));
-            }
-        }
-        throw lastErr;
+  if (!q.trim()) {
+    return await socket.sendMessage(sender, { 
+      text: '*Need YouTube URL or Title.*' 
+    }, { quoted: msg });
+  }
+
+  // YouTube ID extractor
+  const extractYouTubeId = (url) => {
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const normalizeYouTubeLink = (str) => {
+    const id = extractYouTubeId(str);
+    return id ? `https://www.youtube.com/watch?v=${id}` : null;
+  };
+
+  try {
+    await socket.sendMessage(sender, { 
+      react: { text: "🔍", key: msg.key } 
+    }
+  );
+
+  let videoUrl = normalizeYouTubeLink(q.trim());
+
+  // Search if not a link
+  if (!videoUrl) {
+    const search = await yts(q.trim());
+    const found = search?.videos?.[0];
+
+    if (!found) {
+      return await socket.sendMessage(sender, {
+        text: "*No results found.*"
+      }, { quoted: msg });
     }
 
-    // APIs
-    async function izumiByUrl(url) {
-        const api = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(url)}&format=mp3`;
-        const res = await tryRequest(() => axios.get(api, AXIOS_DEFAULTS));
-        if (res?.data?.result?.download) return res.data.result;
-        throw new Error("Izumi URL failed");
+    videoUrl = found.url;
+  }
+
+  // --- API CALL ---
+  const api = `${apibase}/download/ytmp3?apikey=${apikey}&url=${encodeURIComponent(videoUrl)}`;
+  const get = await axios.get(api).then(r => r.data).catch(() => null);
+
+  if (!get?.result) {
+    return await socket.sendMessage(sender, {
+      text: "*API Error. Try again later.*"
+    }, { quoted: msg });
+  }
+
+  const { download_url, title, thumbnail, duration, quality } = get.result;
+
+  const caption = `*AUDIO DOWNLOADER*
+
+╭──────────────╮
+┃🎵 *Title:* \`${title}\`
+┃⏱️ *Duration:* ${duration || 'N/A'}
+┃🔊 *Quality:* ${quality || '128kbps'}
+╰──────────────╯
+
+*Reply with a number to download:*
+
+1️⃣ Document (mp3)
+2️⃣ Audio (mp3)
+3️⃣ Voice Note (ptt)
+
+> DEW CODERS`;
+
+// Send main message
+const resMsg = await socket.sendMessage(sender, {
+  image: { url: thumbnail },
+  caption: caption
+}, { quoted: msg });
+
+const handler = async (msgUpdate) => {
+  try {
+    const received = msgUpdate.messages && msgUpdate.messages[0];
+    if (!received) return;
+
+    const fromId = received.key.remoteJid || received.key.participant || (received.key.fromMe && sender);
+    if (fromId !== sender) return;
+
+    const text = received.message?.conversation || received.message?.extendedTextMessage?.text;
+    if (!text) return;
+
+    // ensure they quoted our card
+    const quotedId = received.message?.extendedTextMessage?.contextInfo?.stanzaId ||
+    received.message?.extendedTextMessage?.contextInfo?.quotedMessage?.key?.id;
+    if (!quotedId || quotedId !== resMsg.key.id) return;
+
+    const choice = text.toString().trim().split(/\s+/)[0];
+
+    await socket.sendMessage(sender, { react: { text: "📥", key: received.key } });
+
+    switch (choice) {
+      case "1":
+      await socket.sendMessage(sender, {
+        document: { url: download_url },
+        mimetype: "audio/mpeg",
+        fileName: `${title}.mp3`
+      }, { quoted: received });
+      break;
+      case "2":
+      await socket.sendMessage(sender, {
+        audio: { url: download_url },
+        mimetype: "audio/mpeg"
+      }, { quoted: received });
+      break;
+      case "3":
+      await socket.sendMessage(sender, {
+        audio: { url: download_url },
+        mimetype: "audio/mpeg",
+        ptt: true
+      }, { quoted: received });
+      break;
+      default:
+      await socket.sendMessage(sender, { text: "*Invalid option. Reply with 1, 2 or 3 (quote the card).*" }, { quoted: received });
+      return;
     }
 
-    async function izumiByQuery(q) {
-        const api = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(q)}`;
-        const res = await tryRequest(() => axios.get(api, AXIOS_DEFAULTS));
-        if (res?.data?.result?.download) return res.data.result;
-        throw new Error("Izumi Query failed");
-    }
+    // cleanup listener after successful send
+    socket.ev.off('messages.upsert', handler);
+  } catch (err) {
+    console.error("Song handler error:", err);
+    try { socket.ev.off('messages.upsert', handler); } catch (e) {}
+  }
+};
 
-    async function okatsu(url) {
-        const api = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(url)}`;
-        const res = await tryRequest(() => axios.get(api, AXIOS_DEFAULTS));
-        if (res?.data?.dl) {
-            return {
-                download: res.data.dl,
-                title: res.data.title,
-                thumbnail: res.data.thumb,
-            };
-        }
-        throw new Error("Okatsu failed");
-    }
+socket.ev.on('messages.upsert', handler);
 
-    try {
-        // read text
-        const q =
-            msg.message?.conversation ||
-            msg.message?.extendedTextMessage?.text ||
-            msg.message?.imageMessage?.caption ||
-            msg.message?.videoMessage?.caption ||
-            "";
+// auto-remove handler after 60s
+setTimeout(() => {
+  try { socket.ev.off('messages.upsert', handler); } catch (e) {}
+}, 60 * 1000);
 
-        if (!q.trim()) {
-            await socket.sendMessage(sender, {
-                text: "🎵 *Please provide a song name or YouTube link!*",
-            });
-            break;
-        }
+// react to original command
+await socket.sendMessage(sender, { react: { text: '🔎', key: msg.key } });
+
+} catch (err) {
+  console.error('Song case error:', err);
+  await socket.sendMessage(sender, { text: "*`Error occurred while processing song request`*" }, { quoted: msg });
+}
+break;
+}
+
+🪽 *FOLLOW US FOR MORE MINI BOT PLUGINS*
+❤️ *මිනි බොට් Plugins ඔනෙ අය චැනල් එක Follow කරන්න*
 
         // detect url or search
         let video;
@@ -7257,6 +7356,7 @@ initMongo().catch(err => console.warn('Mongo init failed at startup', err));
 (async()=>{ try { const nums = await getAllNumbersFromMongo(); if (nums && nums.length) { for (const n of nums) { if (!activeSockets.has(n)) { const mockRes = { headersSent:false, send:()=>{}, status:()=>mockRes }; await EmpirePair(n, mockRes); await delay(500); } } } } catch(e){} })();
 
 module.exports = router;
+
 
 
 
