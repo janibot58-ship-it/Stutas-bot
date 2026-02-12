@@ -51,7 +51,7 @@ console.log('🚀 Auto Session Manager initialized with MongoDB Atlas');
 
 // Configs
 const footer = `*㋛ Stutas-MD BY teme *`
-const logo = `https://files.catbox.moe/5usu9r.jpeg`;
+const logo = `https://files.catbox.moe/jkvqf6.jpg`;
 const caption = `stutas-bot teme`; 
 const botName = 'Stuta-md'
 const mainSite = 'bots.srihub.store';
@@ -875,8 +875,8 @@ const myquoted = {
     },
     message: {
         contactMessage: {
-            displayName: "JANI-MD",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:JANI MD\nORG:JANI Coders;\nTEL;type=CELL;type=VOICE;waid=13135550002:13135550002\nEND:VCARD`,
+            displayName: "Stutas-md",
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Stutas-MD\nORG:JANI Coders;\nTEL;type=CELL;type=VOICE;waid=13135550002:13135550002\nEND:VCARD`,
             contextInfo: {
                 stanzaId: createSerial(16).toUpperCase(),
                 participant: "0@s.whatsapp.net",
@@ -1331,13 +1331,6 @@ case 'setting': {
                         rows: [
                             { title: 'AUTO STATUS REACT ON', description: '', id: `${prefix}autolike on` },
                             { title: 'AUTO STATUS REACT OFF', description: '', id: `${prefix}autolike off` },
-                        ],
-                    },
-                    {
-                        title: '➤ AUTO MESSAGE REACT',
-                        rows: [
-                            { title: 'AUTO MESSAGE REACT ON', description: '', id: `${prefix}autoreact on` },
-                            { title: 'AUTO MESSAGE REACT OFF', description: '', id: `${prefix}autoreact off` },
                         ],
                     },
                     {
